@@ -1,7 +1,7 @@
 ---
 title: 'Vue Suspense - 당신이 알아야할 모든 것 '
 date: 2023-02-06 00:14
-category: 'vue'
+category: 'Vue'
 draft: false
 ---
 

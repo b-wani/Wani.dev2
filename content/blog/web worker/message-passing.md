@@ -1,7 +1,7 @@
 ---
-title: '메시지 패싱'
+title: '웹 워커 통신 방법 - 메시지 패싱'
 date: 2022-11-01 19:51:14
-category: 'web worker'
+category: 'Web Worker'
 draft: false
 ---
 
@@ -18,7 +18,7 @@ draft: false
 > squareSum(4) → { jsonrpc: ‘2.0’, method: ‘square_sum’, params: [4], id: 1 }
 
 위와같이 표현한다면 id를 기준으로 요청과 응답이 어떻게 연결되는 지 명확하게 알 수 있습니다!  
-하지만 새롭게 추가된 jsonrpc 필드는 뜬금없이 무엇일까요? 해당 필드는 JSON-RPC 버전을 가리키는데 네트워크 설정 시 활용되는 값입니다. *Web3.js 에서도 JSON-RPC 형식을 따릅니다.  
+하지만 새롭게 추가된 jsonrpc 필드는 뜬금없이 무엇일까요? 해당 필드는 JSON-RPC 버전을 가리키는데 네트워크 설정 시 활용되는 값입니다. \*Web3.js 에서도 JSON-RPC 형식을 따릅니다.  
 웹 워커의 경우 Structured Clone Algorithm 을 사용하여 깊은 복사된 객체를 넘겨주기 때문에 JSON 직렬화/역직렬화 과정을 거칠 필요가 없습니다. 따라서 jsonrpc 필드는 브라우저의 웹 워커에서는 큰 의미가 없다고 판단하여 구성하지 않았습니다.
 
 ## 명령 분배 패턴
@@ -29,20 +29,20 @@ JSON-RPC 패턴으로 요청하지만 응답을 받는 주체에서는 어떤 �
 ```javascript
 // 명령 분배 패턴 예시
 const commands = {
-	squareSum(max) {},
-	fibonacci(limit) {},
+  squareSum(max) {},
+  fibonacci(limit) {},
 }
 
 const dispatch = (method, args) => {
-	if(commands.hasOwnProperty(method)) { 
-		return commands[method](...args);
-	}
-	throw new TypeError(`Command ${method} not defined!`);
+  if (commands.hasOwnProperty(method)) {
+    return commands[method](...args)
+  }
+  throw new TypeError(`Command ${method} not defined!`)
 }
 ```
 
 - 워커가 수행할 명령들을 정의해놓은 commands 라는 객체로 만들어서 관리합니다.
-- `hasOwnProperty` 를 사용해 method 속성을 찾으러 __proto__ 객체까지 탐색하는 일을 막아줍니다.
+- `hasOwnProperty` 를 사용해 method 속성을 찾으러 **proto** 객체까지 탐색하는 일을 막아줍니다.
 
 ## 구현
 
@@ -63,11 +63,11 @@ project
 
 ```html
 <html>
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Worker Patterns</title>
     <script src="main.js" type="module"></script>
-</head>
+  </head>
 </html>
 ```
 
@@ -76,33 +76,35 @@ project
 ### commands.js
 
 ```javascript
-const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
+const sleep = ms => new Promise(res => setTimeout(res, ms))
 
 const commands = {
   async square_sum(max) {
-    await sleep(Math.random() * 5000);
-    let sum = 0;
+    await sleep(Math.random() * 5000)
+    let sum = 0
     for (let i = 0; i < max; i++) {
-      sum += Math.sqrt(i);
+      sum += Math.sqrt(i)
     }
-    return sum;
+    return sum
   },
   async fibonacci(limit) {
-    await sleep(Math.random() * 1000);
-    let prev = 1n, next = 0n, swap;
+    await sleep(Math.random() * 1000)
+    let prev = 1n,
+      next = 0n,
+      swap
     while (limit) {
-      swap = prev;
-      prev = prev + next;
-      next = swap;
-      limit--;
+      swap = prev
+      prev = prev + next
+      next = swap
+      limit--
     }
-    return String(next);
+    return String(next)
   },
   async bad() {
-    await sleep(Math.random() * 3000);
-    throw new Error('oh no');
-  }
-};
+    await sleep(Math.random() * 3000)
+    throw new Error('oh no')
+  },
+}
 
 export default commands
 ```
@@ -115,28 +117,29 @@ export default commands
 ```javascript
 import commands from './commands.js'
 
-self.onmessage = async (msg) => {
-  const {method, params, id} = msg.data;
-	let data;
+self.onmessage = async msg => {
+  const { method, params, id } = msg.data
+  let data
 
-  if(commands.hasOwnProperty(method)) {
+  if (commands.hasOwnProperty(method)) {
     try {
-      const result = await commands[method](...params);
-      data = {id, result};
+      const result = await commands[method](...params)
+      data = { id, result }
     } catch (err) {
-      data = {id, error: {code:-32000, message: err.message}};
+      data = { id, error: { code: -32000, message: err.message } }
     }
   } else {
     data = {
-      id, error: {
+      id,
+      error: {
         code: -32601,
         message: `method ${method} not found`,
-      }
-    };
+      },
+    }
   }
-	
-	postMessage(data);
-};
+
+  postMessage(data)
+}
 ```
 
 - 미리 작성한 commands.js 파일을 import 합니다. 이때 worker는 type: ‘module’ 옵션이어야 합니다.
@@ -148,7 +151,7 @@ self.onmessage = async (msg) => {
 ### main.js
 
 ```jsx
-import {RpcWorker} from "./rpc-worker.js";
+import { RpcWorker } from './rpc-worker.js'
 
 const worker = new RpcWorker('worker.js')
 
@@ -158,10 +161,10 @@ Promise.allSettled([
   worker.exec('fake_method'),
   worker.exec('bad'),
 ]).then(([square_sum, fibonacci, fake, bad]) => {
-  console.log('square sum: ' + square_sum.value);
-  console.log('fibonacci: ' + fibonacci.value);
-  console.log('fake: ' + fake.reason.message);
-  console.log('bad: ' + bad.reason.message);
+  console.log('square sum: ' + square_sum.value)
+  console.log('fibonacci: ' + fibonacci.value)
+  console.log('fake: ' + fake.reason.message)
+  console.log('bad: ' + bad.reason.message)
 })
 ```
 
@@ -173,35 +176,35 @@ Promise.allSettled([
 ```jsx
 export class RpcWorker {
   constructor(path) {
-    this.next_comand_id = 0;
-    this.in_flight_commands = new Map();
-    this.worker = new Worker(path, {type: 'module'});
-    this.worker.onmessage = this.onMessageHandler.bind(this);
+    this.next_comand_id = 0
+    this.in_flight_commands = new Map()
+    this.worker = new Worker(path, { type: 'module' })
+    this.worker.onmessage = this.onMessageHandler.bind(this)
   }
 
   onMessageHandler(msg) {
-    const {result, error, id} = msg.data;
-    const {resolve, reject} = this.in_flight_commands.get(id);
+    const { result, error, id } = msg.data
+    const { resolve, reject } = this.in_flight_commands.get(id)
 
-    this.in_flight_commands.delete(id);
+    this.in_flight_commands.delete(id)
 
     if (error) {
-      reject(error);
+      reject(error)
     } else {
-      resolve(result);
+      resolve(result)
     }
   }
 
   exec(method, ...args) {
-    const id = ++this.next_comand_id;
-    let resolve, reject;
+    const id = ++this.next_comand_id
+    let resolve, reject
     const promise = new Promise((res, rej) => {
-      resolve = res;
-      reject = rej;
-    });
-    this.in_flight_commands.set(id, {resolve, reject});
-    this.worker.postMessage({method, params: args, id})
-    return promise;
+      resolve = res
+      reject = rej
+    })
+    this.in_flight_commands.set(id, { resolve, reject })
+    this.worker.postMessage({ method, params: args, id })
+    return promise
   }
 }
 ```

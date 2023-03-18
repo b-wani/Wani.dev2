@@ -1,7 +1,7 @@
 ---
-title: 'Evan You의 신년사로 보는 vue의 2023년은?'
+title: 'Evan You의 신년사로 보는 Vue의 2023년은?'
 date: 2023-01-25 00:31
-category: 'vue'
+category: 'Vue'
 draft: false
 ---
 

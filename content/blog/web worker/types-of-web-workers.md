@@ -1,12 +1,13 @@
 ---
-title: '웹 워커'
+title: '웹 워커 종류'
 date: 2022-10-24 21:12:30
-category: 'web worker'
+category: 'Web Worker'
 draft: false
 ---
 
 실무 적용을 위해 브라우저에서 제공하는 멀티스레딩 API 인 웹 워커를 정리한 글 입니다. 웹 워커는 CPU 부하량이 높은 작업을 별도의 스레드에서 처리할 수 있다는 장점이 있습니다. 그러면 메인 쓰레드는 UI 렌더링에 더 집중하여 안정적인 FPS(Frame Per Second)를 유지할 수 있습니다. 결과적으로 사용자에게 더 좋은 웹 페이지 경험을 제공할 수 있습니다!  
 프론트엔드 프레임워크에 삼대장이 있듯, 워커도 삼대장이 있습니다. 물론 점유율도 다양하구요. 하나씩 정리해봅시다.
+
 ## 1. 전용 워커 (Dedicated Worker)
 
 단일 스크립트에서만 사용하는 스레드입니다. 보통 워커를 구현한다고 했을 때 가장 많이 사용하며 적용 또한 단순합니다. 메시지 패싱(message passing) 방식으로 메인 스레드와 워커 스레드가 서로 통신을 합니다.
@@ -15,24 +16,25 @@ draft: false
 
 ```javascript
 // main.js
-const worker = new Worker('worker.js');
+const worker = new Worker('worker.js')
 
-worker.onmessage = (msg) => {
-	console.log(msg.data);
+worker.onmessage = msg => {
+  console.log(msg.data)
 }
 
-worker.postMessage('main → worker');
+worker.postMessage('main → worker')
 ```
+
 - onmessage 이벤트 핸들러의 인자는 MessageEvent 객체로써 data 속성에 워커가 보낸 메시지가 담겨있습니다
 - postMessage 함수의 인자는 Structured clone algorithm 을 사용하여 깊은 복사된 데이터를 전달합니다
 - Structured clone algorithm 은 지원하는 타입이 정해져있어서 [여기](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm#supported_types)를 참고하면 좋을 것 같습니다
 
 ```jsx
 // worker.js
-self.onmessage = (msg) => {
-	console.log(msg.data);
-	
-	postMessage('worker → main');
+self.onmessage = msg => {
+  console.log(msg.data)
+
+  postMessage('worker → main')
 }
 ```
 
@@ -79,7 +81,7 @@ worker.terminate
 워커를 생성하려면 아래와 같이 생성자 함수를 사용합니다. 각 인자를 살펴보겠습니다.
 
 ```javascript
-const worker = new Worker(filename, options);
+const worker = new Worker(filename, options)
 ```
 
 filename: 워커가 동작할 코드의 URL 을 작성합니다. 동일 출처 정책을 따르기 때문에 같은 Origin 의 URL 만 가능합니다.
@@ -88,9 +90,10 @@ options: 객체 타입으로 워커의 여러 옵션을 지정할 수 있습니�
 
 - type: 디폴트값은 classic 으로 일반적인 자바스크립트 파일을 나타내지만, module 은 ECMAScript 모듈을 나타내어 module 로 선언 시, 외부 코드를 import 할 수 있습니다.
 - credentials: 워커 파일을 로드할 때, HTTP 자격증명을 포함할 지 결정합니다. type 이 module 인 경우에만 사용됩니다.
-    - omit: 디폴트값, 자격증명을 항상 제외
-    - same-origin: 동일한 Origin 일 경우에만 자격증명 전송
-    - include: 항상 자격증명 전송
+
+  - omit: 디폴트값, 자격증명을 항상 제외
+  - same-origin: 동일한 Origin 일 경우에만 자격증명 전송
+  - include: 항상 자격증명 전송
 
   ![credentials](./images/credentials.png)
   자격증명 활성화 후 아무 정보없이 요청하면 위와 같은 경고 메시지가 발생된다
@@ -117,7 +120,7 @@ console.log('red.js')
 
 const worker = new SharedWorker('shared-worker.js')
 
-worker.port.onmessage = (event) => {
+worker.port.onmessage = event => {
   console.log('EVENT', event.data)
 }
 ```
@@ -128,7 +131,7 @@ console.log('blue.js')
 
 const worker = new SharedWorker('shared-worker.js')
 
-worker.port.onmessage = (event) => {
+worker.port.onmessage = event => {
   console.log('EVENT', event.data)
 }
 ```
@@ -140,15 +143,15 @@ console.log('shared-worker.js', ID)
 
 const ports = new Set()
 
-self.onconnect = (event) => {
-  const port = event.ports[0];
-  ports.add(port);
-  console.log('CONN', ID, port.size);
+self.onconnect = event => {
+  const port = event.ports[0]
+  ports.add(port)
+  console.log('CONN', ID, port.size)
 
-  port.onmessage = (event) => {
-    console.log('MESSAGE', ID, event.data);
+  port.onmessage = event => {
+    console.log('MESSAGE', ID, event.data)
 
-    for(let p of ports) {
+    for (let p of ports) {
       p.postMessage([ID, event.data])
     }
   }
@@ -170,7 +173,7 @@ self.onconnect = (event) => {
 
 ```javascript
 // main.js
-navigator.serviceWorker.register('service-worker.js', {scope: '/'})
+navigator.serviceWorker.register('service-worker.js', { scope: '/' })
 
 // contorllerchange 이벤트 리스너
 navigator.serviceWorker.oncontrollerchange = () => {
@@ -180,7 +183,7 @@ navigator.serviceWorker.oncontrollerchange = () => {
 // 요청 함수
 const makeRequest = async () => {
   const result = await fetch('/data.json')
-  const payload = await result.json;
+  const payload = await result.json
   console.log(payload)
 }
 ```
@@ -191,31 +194,33 @@ const makeRequest = async () => {
 
 ```javascript
 // service-worker.js
-let count = 0;
+let count = 0
 
-self.oninstall = (event) => {
+self.oninstall = event => {
   console.log('service worker install')
 }
 
-self.onactivate = (event) => {
+self.onactivate = event => {
   console.log('service worker activate')
   event.waitUntil(self.clients.claim())
 }
 
-self.onfetch = (event) => {
+self.onfetch = event => {
   console.log('fetch', event.request.url)
 
-  if(event.request.url.endsWith('/data.json')) {
-    count++;
-    event.respondWith(new Response(JSON.stringify({count}), {
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    }))
+  if (event.request.url.endsWith('/data.json')) {
+    count++
+    event.respondWith(
+      new Response(JSON.stringify({ count }), {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+    )
     return
   }
 
-  event.respondWith(fetch(event.request));
+  event.respondWith(fetch(event.request))
 }
 ```
 
@@ -242,7 +247,7 @@ installing
 
 - 서비스 워커가 설치중인 상태입니다.
 - 새로운 서비스 워커가 업데이트될 때마다 발생합니다
-- onInstall 핸들러가 호출되고 event.respondWith 가  resolve 되기 전의 상태입니다.
+- onInstall 핸들러가 호출되고 event.respondWith 가 resolve 되기 전의 상태입니다.
 
 installed
 

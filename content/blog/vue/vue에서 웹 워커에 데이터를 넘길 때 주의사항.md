@@ -1,7 +1,7 @@
 ---
-title: 'vue에서 웹 워커에 데이터를 넘길 때 주의사항'
+title: 'Vue에서 웹 워커에 데이터를 넘길 때 주의사항'
 date: 2023-01-22 17:09
-category: 'vue'
+category: 'Vue'
 draft: false
 ---
 
